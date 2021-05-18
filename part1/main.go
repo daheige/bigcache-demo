@@ -129,9 +129,10 @@ func RouteHandler() *mux.Router {
 	r.StrictSlash(true)
 
 	// install access log and recover handler
-	// r.Use(AccessLog, RecoverHandler)
+	// r.Use(AccessLog, RecoverHandler,monitor.MonitorHandler)
 
-	r.Use(RecoverHandler)
+	// 去掉日志中间件
+	r.Use(RecoverHandler, monitor.MonitorHandler)
 
 	// not found handler
 	r.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
@@ -270,6 +271,7 @@ func RecoverHandler(h http.Handler) http.Handler {
 	})
 }
 
+// AccessLog 访问日志中间件
 func AccessLog(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
