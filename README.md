@@ -71,3 +71,7 @@
 # benchmark test
     
     https://github.com/allegro/bigcache-bench
+
+# other demo
+    
+    https://blog.csdn.net/youshijian99/article/details/84929438
