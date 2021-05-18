@@ -70,41 +70,41 @@
     基本上qps单机在5100qps/s,tps 0.89MB bigcache效率还是相当不错的
     日志中间件使用log.Println存在的问题，大并发下，互斥锁方式，日志输出到终端产生了锁等待
     原因在于log.Println底层使用了sync.Mutex lock
-    ``` go
-    // Println calls Output to print to the standard logger.
-    // Arguments are handled in the manner of fmt.Println.
-    func Println(v ...interface{}) {
-        std.Output(2, fmt.Sprintln(v...))
-    }
-    
-    // A Logger represents an active logging object that generates lines of
-    // output to an io.Writer. Each logging operation makes a single call to
-    // the Writer's Write method. A Logger can be used simultaneously from
-    // multiple goroutines; it guarantees to serialize access to the Writer.
-    type Logger struct {
-        mu     sync.Mutex // ensures atomic writes; protects the following fields
-        prefix string     // prefix on each line to identify the logger (but see Lmsgprefix)
-        flag   int        // properties
-        out    io.Writer  // destination for output
-        buf    []byte     // for accumulating text to write
-    }
+``` go
+// Println calls Output to print to the standard logger.
+// Arguments are handled in the manner of fmt.Println.
+func Println(v ...interface{}) {
+std.Output(2, fmt.Sprintln(v...))
+}
 
-    // Output writes the output for a logging event. The string s contains
-    // the text to print after the prefix specified by the flags of the
-    // Logger. A newline is appended if the last character of s is not
-    // already a newline. Calldepth is used to recover the PC and is
-    // provided for generality, although at the moment on all pre-defined
-    // paths it will be 2.
-    func (l *Logger) Output(calldepth int, s string) error {
-        now := time.Now() // get this early.
-        var file string
-        var line int
-        l.mu.Lock()
-        defer l.mu.Unlock()
-        // ....
-            return err
-    }
-    ```
+// A Logger represents an active logging object that generates lines of
+// output to an io.Writer. Each logging operation makes a single call to
+// the Writer's Write method. A Logger can be used simultaneously from
+// multiple goroutines; it guarantees to serialize access to the Writer.
+type Logger struct {
+mu     sync.Mutex // ensures atomic writes; protects the following fields
+prefix string     // prefix on each line to identify the logger (but see Lmsgprefix)
+flag   int        // properties
+out    io.Writer  // destination for output
+	buf    []byte     // for accumulating text to write
+	}
+
+// Output writes the output for a logging event. The string s contains
+// the text to print after the prefix specified by the flags of the
+// Logger. A newline is appended if the last character of s is not
+// already a newline. Calldepth is used to recover the PC and is
+// provided for generality, although at the moment on all pre-defined
+// paths it will be 2.
+func (l *Logger) Output(calldepth int, s string) error {
+now := time.Now() // get this early.
+var file string
+var line int
+l.mu.Lock()
+defer l.mu.Unlock()
+// ....
+    return err
+}
+```
 
     关闭访问日志中间件，日志主要是采用log.Println方式打印
     注释掉part1/main.go#132
