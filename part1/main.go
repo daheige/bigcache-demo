@@ -129,7 +129,9 @@ func RouteHandler() *mux.Router {
 	r.StrictSlash(true)
 
 	// install access log and recover handler
-	r.Use(AccessLog, RecoverHandler)
+	// r.Use(AccessLog, RecoverHandler)
+
+	r.Use(RecoverHandler)
 
 	// not found handler
 	r.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
@@ -191,8 +193,14 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	key := "my-test"
 	b, err := getCache(key)
 	if err == bigCache.ErrEntryNotFound {
+		log.Println("cache not fond")
+
 		b = []byte("1234")
 		setCache(key, b)
+	}
+
+	if len(b) == 0 {
+		log.Println("cache is empty")
 	}
 
 	res := ApiResult{
@@ -205,8 +213,6 @@ func getData(w http.ResponseWriter, r *http.Request) {
 
 	jsonBytes, _ := json.Marshal(res)
 	w.Write(jsonBytes)
-	return
-
 }
 
 func getCache(key string) ([]byte, error) {
