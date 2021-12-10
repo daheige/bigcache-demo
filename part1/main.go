@@ -13,19 +13,21 @@ import (
 	"syscall"
 	"time"
 
-	bigCache "github.com/allegro/bigcache/v2"
-	"github.com/daheige/bigcache-demo/utils"
 	"github.com/daheige/tigago/gpprof"
 	"github.com/daheige/tigago/gutils"
 	"github.com/daheige/tigago/monitor"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/daheige/bigcache-demo/cache"
+	"github.com/daheige/bigcache-demo/cache/bigcache"
+	"github.com/daheige/bigcache-demo/utils"
 )
 
 var (
-	port  = 1336
-	cache *bigCache.BigCache
+	port       = 1336
+	cacheEntry cache.Cache
 )
 
 // H map简写
@@ -40,7 +42,10 @@ type ApiResult struct {
 
 func InitCache() {
 	// 底层默认1024个Shards 分片
-	cache, _ = bigCache.NewBigCache(bigCache.DefaultConfig(10 * time.Minute))
+	cacheEntry, _ = bigcache.New(10*time.Minute,
+		bigcache.WithShards(64),
+		bigcache.WithCleanWindow(3*time.Second),
+	)
 }
 
 func init() {
@@ -193,7 +198,7 @@ func setData(w http.ResponseWriter, r *http.Request) {
 func getData(w http.ResponseWriter, r *http.Request) {
 	key := "my-test"
 	b, err := getCache(key)
-	if err == bigCache.ErrEntryNotFound {
+	if err == bigcache.ErrEntryNotFound {
 		log.Println("cache not fond")
 
 		b = []byte("1234")
@@ -217,21 +222,22 @@ func getData(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCache(key string) ([]byte, error) {
-	return cache.Get(key)
+	return cacheEntry.Get(key)
 }
 
 func setCache(key string, value interface{}) error {
 	if v, ok := value.([]byte); ok {
-		cache.Set(key, v)
+		cacheEntry.Set(key, v)
 		return nil
 	}
 
+	// 如果不是[]byte先通过序列化处理下
 	b, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("set key:%s cache error:%s", key, err.Error())
 	}
 
-	cache.Set(key, b)
+	cacheEntry.Set(key, b)
 
 	return nil
 }
