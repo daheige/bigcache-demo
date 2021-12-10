@@ -125,6 +125,23 @@ defer l.mu.Unlock()
     
     在这种情况下，qps高达103204req/sec,tps: 16.34MB
 
+    单机压力测试
+    % wrk -t 8 -d 60 -c 400 --latency http://localhost:1336/get-data
+    Running 1m test @ http://localhost:1336/get-data
+    8 threads and 400 connections
+    Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.59ms    1.48ms  72.65ms   92.19%
+    Req/Sec    11.80k     2.42k   30.34k    65.14%
+    Latency Distribution
+    50%    2.42ms
+    75%    2.77ms
+    90%    3.31ms
+    99%    6.84ms
+    5637931 requests in 1.00m, 0.87GB read
+    Socket errors: connect 157, read 101, write 0, timeout 0
+    Requests/sec:  93817.39
+    Transfer/sec:     14.76MB
+
 # benchmark test
     
     https://github.com/allegro/bigcache-bench
